@@ -26,7 +26,10 @@ namespace Routine.Api
 
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddControllers();
+            services.AddControllers(setup =>
+            {
+                setup.ReturnHttpNotAcceptable = true;
+            }).AddXmlDataContractSerializerFormatters();
             services.AddScoped<ICompanyRepository, CompanyRepository>();
             services.AddDbContext<RoutineDbContext>(options =>
             {
