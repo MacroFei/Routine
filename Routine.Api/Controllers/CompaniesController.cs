@@ -21,9 +21,26 @@ namespace Routine.Api.Controllers
             _companyRepository = companyRepository ??
                 throw new ArgumentNullException(nameof(companyRepository));
         }
-        
+
+        //[HttpGet]
+        //public async Task<IActionResult> GetCompanies()
+        //{
+        //    var companies = await _companyRepository.GetCompaniesAsync();
+
+        //    var companyDtos = new List<CompanyDto>();
+        //    foreach (var company in companies)
+        //    {
+        //        companyDtos.Add(new CompanyDto
+        //        {
+        //            Id = company.Id,
+        //            Name = company.Name
+        //        });
+        //    }
+
+        //    return Ok(companyDtos);
+        //}
         [HttpGet]
-        public async Task<IActionResult> GetCompanies()
+        public async Task<ActionResult<IEnumerable<CompanyDto>>> GetCompanies()
         {
             var companies = await _companyRepository.GetCompaniesAsync();
 
