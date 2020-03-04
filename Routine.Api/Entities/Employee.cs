@@ -17,9 +17,9 @@ namespace Routine.Api.Entities
         public Company Company { get; set; }
     }
 
-    public enum Gender
-    {
-        男 = 1,
-        女 =2 
-    }
+    //public enum Gender
+    //{
+    //    男 = 1,
+    //    女 =2 
+    //}
 }
