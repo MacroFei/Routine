@@ -1,4 +1,5 @@
-﻿using Routine.Api.Entities;
+﻿using Routine.Api.DtoParameters;
+using Routine.Api.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,7 +14,7 @@ namespace Routine.Api.Services
         void AddEmployee(Guid companyId, Employee employee);
         void UpdateEmployee(Employee employee);
         void DeleteEmployee(Employee employee);
-        Task<IEnumerable<Company>> GetCompaniesAsync();
+        Task<IEnumerable<Company>> GetCompaniesAsync(CompanyDtoParameters parameters);
         Task<Company> GetCompanyAsync(Guid companyId);
         Task<IEnumerable<Company>> GetCompaniesAsync(IEnumerable<Guid> companyIds);
         void AddCompany(Company company);

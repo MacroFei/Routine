@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Routine.Api.DbContexts;
+using Routine.Api.DtoParameters;
 using Routine.Api.Entities;
 using System;
 using System.Collections.Generic;
@@ -71,9 +72,32 @@ namespace Routine.Api.Services
             _context.Employees.Remove(employee);
         }
 
-        public async Task<IEnumerable<Company>> GetCompaniesAsync()
+        public async Task<IEnumerable<Company>> GetCompaniesAsync(CompanyDtoParameters parameters )
         {
-            return await _context.Companies.ToListAsync();
+            if (parameters == null )
+            {
+                throw new ArgumentNullException(nameof(parameters));
+            }
+
+            if (string.IsNullOrWhiteSpace(parameters.SearchTerm) && 
+                string.IsNullOrWhiteSpace(parameters.CompanyName))
+            {
+                return await _context.Companies.ToListAsync();
+            }
+            var queryExpression = _context.Companies as IQueryable<Company>;
+
+            if (! string.IsNullOrWhiteSpace(parameters.CompanyName))
+            {
+                parameters.CompanyName = parameters.CompanyName.Trim();
+                queryExpression = queryExpression.Where(x => x.Name == parameters.CompanyName);
+            }
+            if (! string.IsNullOrWhiteSpace(parameters.SearchTerm))
+            {
+                parameters.SearchTerm = parameters.SearchTerm.Trim();
+                queryExpression = queryExpression.Where(x => x.Name.Contains(parameters.SearchTerm) ||
+                                                            x.Introduction.Contains(parameters.SearchTerm));
+            }
+            return await queryExpression.ToListAsync();
         }
 
         public async Task<IEnumerable<Company>> GetCompaniesAsync(IEnumerable<Guid> companyIds)
