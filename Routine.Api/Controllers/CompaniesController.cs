@@ -42,9 +42,10 @@ namespace Routine.Api.Controllers
         //    return Ok(companyDtos);
         //}
         [HttpGet]
+        [HttpHead]
         public async Task<ActionResult<IEnumerable<CompanyDto>>> GetCompanies()
         {
-            throw new Exception("just a exception");
+            //throw new Exception("just a exception");
             var companies = await _companyRepository.GetCompaniesAsync();
 
             var companyDtos = _mapper.Map<IEnumerable<CompanyDto>>(companies);
