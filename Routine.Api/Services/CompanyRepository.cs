@@ -113,7 +113,7 @@ namespace Routine.Api.Services
                 .Where(x => x.CompanyId == companyId && x.Id == employeeId).FirstOrDefaultAsync();
         }
 
-        public async Task<IEnumerable<Employee>> GetEmployeesAsync(Guid companyId , string genderDisplay)
+        public async Task<IEnumerable<Employee>> GetEmployeesAsync(Guid companyId , string genderDisplay , string q )
         {
 
             if (companyId == Guid.Empty)
@@ -121,19 +121,34 @@ namespace Routine.Api.Services
                 throw new ArgumentNullException(nameof(companyId));
             }
 
-            if (string.IsNullOrWhiteSpace(genderDisplay))
+            if (string.IsNullOrWhiteSpace(genderDisplay) && string.IsNullOrWhiteSpace(q))
             {
                 return await _context.Employees
                .Where(x => x.CompanyId == companyId)
                .OrderBy(x => x.EmployeeNo)
                .ToListAsync();
             }
+            var items = _context.Employees.Where(x => x.CompanyId == companyId);
 
-            var genderStr = genderDisplay.Trim();
-            var gender = Enum.Parse<Gender>(genderStr);
+            if (! string.IsNullOrWhiteSpace(genderDisplay))
+            {
+                genderDisplay = genderDisplay.Trim();
+                var gender = Enum.Parse<Gender>(genderDisplay);
 
-            return await _context.Employees
-                .Where(x => x.CompanyId == companyId && x.Gender == gender)
+                items = items.Where(x => x.Gender == gender);
+            }
+            if (! string.IsNullOrWhiteSpace(q))
+            {
+                q = q.Trim();
+                items = items.Where(x => x.EmployeeNo.Contains(q) ||
+                x.FirstName.Contains(q) ||
+                x.LastName.Contains(q));
+            }
+
+            //var genderStr = genderDisplay.Trim();
+            //var gender = Enum.Parse<Gender>(genderStr);
+
+            return await items
                 .OrderBy(x => x.EmployeeNo)
                 .ToListAsync();
         }
