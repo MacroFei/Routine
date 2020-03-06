@@ -1,10 +1,12 @@
 ﻿using Routine.Api.Entities;
+using Routine.Api.ValidationAttributes;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace Routine.Api.Models
 {
+    [EmployeeNoMustDifferentFromFirstNameAttribute]
     public class EmployeeAddDto : IValidatableObject
     {
         [Display(Name ="员工号")]
