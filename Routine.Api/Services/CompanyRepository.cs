@@ -192,7 +192,21 @@ namespace Routine.Api.Services
 
         public void UpdateEmployee(Employee employee)
         {
-            _context.Update(employee);
+            //_context.Update(employee);
+            // dbContextEntityFraworkCore  Entity被查询出来后 属性被跟踪 
+            //属性变化之后 dbContext知道了 
+            //执行 saveChanges方法 变化就写入数据库
+
+            /*
+             * 采用repository模式
+             * 做到与存储无关
+             * 写Controller时仅关心业务逻辑
+             * repository相当于进行了一层抽象
+             * 做成了一些合约
+             * 让程序员仅关心合约（业务）
+             * 降低程序的耦合性
+             * 适用单元测试
+             */
         }
     }
 }

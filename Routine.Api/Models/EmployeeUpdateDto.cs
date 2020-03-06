@@ -6,7 +6,8 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Routine.Api.Models
 {
-    public class EmployeeAddDto : EmployeeAddOrUpdateDto
+    //[EmployeeNoMustDifferentFromFirstNameAttribute(ErrorMessage ="员工编号必须和名不一样！！")]
+    public class EmployeeUpdateDto : EmployeeAddOrUpdateDto
     {
        
     }

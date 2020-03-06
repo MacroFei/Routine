@@ -19,8 +19,8 @@ namespace Routine.Api.Controllers
 
         public EmployeesController(IMapper mapper , ICompanyRepository companyRepository)
         {
-            _mapper = mapper;
-            _companyRepository = companyRepository;
+            _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
+            _companyRepository = companyRepository ?? throw new ArgumentNullException(nameof(companyRepository));
         }
         //[HttpGet]
         //public async Task<ActionResult<IEnumerable<EmployeeDto>>> GetEmployeesForCompany(Guid companyId)
@@ -90,6 +90,37 @@ namespace Routine.Api.Controllers
                 companyId,
                 employeeId = dtoToReturn.Id
             },dtoToReturn);  
+        }
+
+        [HttpPut("{employeeId}")]
+        public async Task<IActionResult> UpdateEmployeeForCompany(
+            Guid companyId,
+            Guid employeeId,
+            EmployeeUpdateDto employee)
+        {
+            if (!await _companyRepository.CompanyExistsAsync(companyId))
+            {
+                return NotFound();
+            }
+            var employeeEntity = await _companyRepository.GetEmployeeAsync(companyId, employeeId);
+
+            if (employeeEntity == null)
+            {
+                return NotFound();
+            }
+
+            // entity 转化为 updateDto
+            // 把传进来的employee的值更新到 updateDto
+            // 把updateDto映射回entity
+
+            _mapper.Map(employee, employeeEntity);
+
+            _companyRepository.UpdateEmployee(employeeEntity);
+
+            await _companyRepository.SaveAsync();
+
+            //204
+            return NoContent();
         }
     }
 }
