@@ -1,5 +1,9 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Routine.Api.Entities;
 using Routine.Api.Models;
 using Routine.Api.Services;
@@ -17,7 +21,7 @@ namespace Routine.Api.Controllers
         private readonly IMapper _mapper;
         private readonly ICompanyRepository _companyRepository;
 
-        public EmployeesController(IMapper mapper , ICompanyRepository companyRepository)
+        public EmployeesController(IMapper mapper, ICompanyRepository companyRepository)
         {
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
             _companyRepository = companyRepository ?? throw new ArgumentNullException(nameof(companyRepository));
@@ -41,7 +45,7 @@ namespace Routine.Api.Controllers
         public async Task<ActionResult<IEnumerable<EmployeeDto>>>
             GetEmployeesForCompany(Guid companyId,
             [FromQuery(Name = "gender")] string genderDisplay,
-            string q )
+            string q)
         {
             if (!await _companyRepository.CompanyExistsAsync(companyId))
             {
@@ -49,22 +53,22 @@ namespace Routine.Api.Controllers
             }
 
             var employees = await _companyRepository
-                .GetEmployeesAsync(companyId , genderDisplay , q);
+                .GetEmployeesAsync(companyId, genderDisplay, q);
 
             var employeeDtos = _mapper.Map<IEnumerable<EmployeeDto>>(employees);
 
             return Ok(employeeDtos);
         }
 
-        [HttpGet("{employeeId}" , Name =nameof(GetEmployeeForCompany))]
-        public async Task<ActionResult<EmployeeDto>> GetEmployeeForCompany(Guid companyId , Guid employeeId)
+        [HttpGet("{employeeId}", Name = nameof(GetEmployeeForCompany))]
+        public async Task<ActionResult<EmployeeDto>> GetEmployeeForCompany(Guid companyId, Guid employeeId)
         {
             if (!await _companyRepository.CompanyExistsAsync(companyId))
             {
                 return NotFound();
             }
 
-            var employee =await _companyRepository.GetEmployeeAsync(companyId, employeeId);
+            var employee = await _companyRepository.GetEmployeeAsync(companyId, employeeId);
             if (employee == null)
             {
                 return NotFound();
@@ -73,9 +77,9 @@ namespace Routine.Api.Controllers
             return Ok(employeeDto);
         }
 
-        public async Task<ActionResult<EmployeeDto>> CreateEmployeeForCompany(Guid companyId ,EmployeeAddDto employee)
+        public async Task<ActionResult<EmployeeDto>> CreateEmployeeForCompany(Guid companyId, EmployeeAddDto employee)
         {
-            if (! await _companyRepository.CompanyExistsAsync(companyId))
+            if (!await _companyRepository.CompanyExistsAsync(companyId))
             {
                 return NotFound();
             }
@@ -85,11 +89,11 @@ namespace Routine.Api.Controllers
 
             var dtoToReturn = _mapper.Map<EmployeeDto>(entity);
 
-            return CreatedAtRoute(nameof(GetEmployeeForCompany),new 
-            { 
+            return CreatedAtRoute(nameof(GetEmployeeForCompany), new
+            {
                 companyId,
                 employeeId = dtoToReturn.Id
-            },dtoToReturn);  
+            }, dtoToReturn);
         }
 
         [HttpPut("{employeeId}")]
@@ -133,6 +137,72 @@ namespace Routine.Api.Controllers
 
             //204
             return NoContent();
+        }
+
+        [HttpPatch("{employeeId}")]
+        public async Task<IActionResult> PartiallyUpdateEmployeeForCompany(
+            Guid companyId,
+            Guid employeeId,
+            JsonPatchDocument<EmployeeUpdateDto> patchDocument)
+        {
+            if (!await _companyRepository.CompanyExistsAsync(companyId))
+            {
+                return NotFound();
+            }
+            var employeeEntity = await _companyRepository.GetEmployeeAsync(companyId, employeeId);
+
+            if (employeeEntity == null)
+            {
+                var employeeDto = new EmployeeUpdateDto();
+                patchDocument.ApplyTo(employeeDto, ModelState);
+
+                if (!TryValidateModel(employeeDto))
+                {
+                    return ValidationProblem(ModelState);
+                }
+                var employeeToAdd = _mapper.Map<Employee>(employeeDto);
+                employeeToAdd.Id = employeeId;
+
+                _companyRepository.AddEmployee(companyId, employeeToAdd);
+                await _companyRepository.SaveAsync();
+
+                var dtoToReturn = _mapper.Map<EmployeeDto>(employeeToAdd);
+
+                return CreatedAtRoute(nameof(GetEmployeeForCompany), new
+                {
+                    companyId,
+                    employeeId = dtoToReturn.Id
+
+                },dtoToReturn);
+
+            }
+
+            var dtoToPatch = _mapper.Map<EmployeeUpdateDto>(employeeEntity);
+
+            //需要处理验证错误
+            patchDocument.ApplyTo(dtoToPatch, ModelState);
+
+            if (!TryValidateModel(dtoToPatch))
+            {
+                return ValidationProblem(ModelState);
+            }
+
+
+            _mapper.Map(dtoToPatch, employeeEntity);
+
+            _companyRepository.UpdateEmployee(employeeEntity);
+
+            await _companyRepository.SaveAsync();
+
+            return NoContent();
+
+        }
+
+        public override ActionResult ValidationProblem(
+            ModelStateDictionary modelStateDictionary)
+        {
+            var options = HttpContext.RequestServices.GetRequiredService<IOptions<ApiBehaviorOptions>>();
+            return (ActionResult)options.Value.InvalidModelStateResponseFactory(ControllerContext);
         }
     }
 }
