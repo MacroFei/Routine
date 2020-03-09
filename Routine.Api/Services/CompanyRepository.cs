@@ -145,7 +145,7 @@ namespace Routine.Api.Services
                 .Where(x => x.CompanyId == companyId && x.Id == employeeId).FirstOrDefaultAsync();
         }
 
-        public async Task<IEnumerable<Employee>> GetEmployeesAsync(Guid companyId , string genderDisplay , string q )
+        public async Task<IEnumerable<Employee>> GetEmployeesAsync(Guid companyId ,EmployeeDtoParameters parameters )
         {
 
             if (companyId == Guid.Empty)
@@ -153,35 +153,35 @@ namespace Routine.Api.Services
                 throw new ArgumentNullException(nameof(companyId));
             }
 
-            if (string.IsNullOrWhiteSpace(genderDisplay) && string.IsNullOrWhiteSpace(q))
-            {
-                return await _context.Employees
-               .Where(x => x.CompanyId == companyId)
-               .OrderBy(x => x.EmployeeNo)
-               .ToListAsync();
-            }
+
             var items = _context.Employees.Where(x => x.CompanyId == companyId);
 
-            if (! string.IsNullOrWhiteSpace(genderDisplay))
+            if (! string.IsNullOrWhiteSpace(parameters.Gender))
             {
-                genderDisplay = genderDisplay.Trim();
-                var gender = Enum.Parse<Gender>(genderDisplay);
+                parameters.Gender = parameters.Gender.Trim();
+                var gender = Enum.Parse<Gender>(parameters.Gender);
 
                 items = items.Where(x => x.Gender == gender);
             }
-            if (! string.IsNullOrWhiteSpace(q))
+            if (! string.IsNullOrWhiteSpace(parameters.Q))
             {
-                q = q.Trim();
-                items = items.Where(x => x.EmployeeNo.Contains(q) ||
-                x.FirstName.Contains(q) ||
-                x.LastName.Contains(q));
+                parameters.Q = parameters.Q.Trim();
+                items = items.Where(x => x.EmployeeNo.Contains(parameters.Q) ||
+                x.FirstName.Contains(parameters.Q) ||
+                x.LastName.Contains(parameters.Q));
             }
 
-            //var genderStr = genderDisplay.Trim();
-            //var gender = Enum.Parse<Gender>(genderStr);
+            if (!string.IsNullOrWhiteSpace(parameters.OrderBy))
+            {
+                if (parameters.OrderBy == "name")
+                {
+                    items = items.OrderBy(x => x.FirstName).ThenBy(x => x.LastName);
+                }
+            }
 
+            items.ApplySort(parameters.OrderBy, mappingDictionay);
+          
             return await items
-                .OrderBy(x => x.EmployeeNo)
                 .ToListAsync();
         }
 

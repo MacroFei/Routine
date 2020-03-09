@@ -122,7 +122,7 @@ namespace Routine.Api.Controllers
                 return NotFound();
             }
             //仅加载进内存中，方便追踪 为了级联删除
-            await _companyRepository.GetEmployeesAsync(companyId, null, null);
+            await _companyRepository.GetEmployeesAsync(companyId, null);
 
             _companyRepository.DeleteCompany(companyEntity);
             await _companyRepository.SaveAsync();
