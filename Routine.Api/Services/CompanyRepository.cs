@@ -3,6 +3,7 @@ using Routine.Api.DbContexts;
 using Routine.Api.DtoParameters;
 using Routine.Api.Entities;
 using Routine.Api.Helpers;
+using Routine.Api.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,10 +14,12 @@ namespace Routine.Api.Services
     public class CompanyRepository : ICompanyRepository 
     {
         private readonly RoutineDbContext _context;
+        private readonly IPropertyMappingService _propertyMappingService;
 
-        public CompanyRepository(RoutineDbContext context)
+        public CompanyRepository(RoutineDbContext context , IPropertyMappingService propertyMappingService)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
+            _propertyMappingService = propertyMappingService;
         }
         public void AddCompany(Company company)
         {
@@ -166,21 +169,21 @@ namespace Routine.Api.Services
             if (! string.IsNullOrWhiteSpace(parameters.Q))
             {
                 parameters.Q = parameters.Q.Trim();
-                items = items.Where(x => x.EmployeeNo.Contains(parameters.Q) ||
-                x.FirstName.Contains(parameters.Q) ||
-                x.LastName.Contains(parameters.Q));
+                items = items.Where(x => x.EmployeeNo.Contains(parameters.Q)
+                                   || x.FirstName.Contains(parameters.Q) 
+                                   || x.LastName.Contains(parameters.Q));
             }
 
-            if (!string.IsNullOrWhiteSpace(parameters.OrderBy))
-            {
-                if (parameters.OrderBy == "name")
-                {
-                    items = items.OrderBy(x => x.FirstName).ThenBy(x => x.LastName);
-                }
-            }
+            //if (!string.IsNullOrWhiteSpace(parameters.OrderBy))
+            //{
+            //    if (parameters.OrderBy == "name")
+            //    {
+            //        items = items.OrderBy(x => x.FirstName).ThenBy(x => x.LastName);
+            //    }
+            //}
+            var mappingDictionary = _propertyMappingService.GetPropertyMapping<EmployeeDto, Employee>();
+            items = items.ApplySort(parameters.OrderBy, mappingDictionary);
 
-            items.ApplySort(parameters.OrderBy, mappingDictionay);
-          
             return await items
                 .ToListAsync();
         }
